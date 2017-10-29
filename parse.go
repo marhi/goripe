@@ -35,11 +35,26 @@ import (
     "os"
 )
 
+func addrFormat(parts []string) string {
+    addr := ""
+    if strings.Contains(parts[1], ".") {
+        // IPv4
+        fromTo := strings.Split(parts[1], "-")
+        addr = fromTo[0] + ";" + fromTo[1]
+    } else {
+        // IPv6
+        ipv6 := strings.Join(parts[1:], ":")
+        addr = ipv6 + ";" + ipv6
+    }
+    addr += ";"
+
+    return addr
+}
 
 // Parse(fh *os.File)
 // Parses the input ripe database for IPv4 ranges and corresponding countries.
 // Status messages are written to stderr, and data to stdout
-func Parse(fh *os.File) {
+func Parse(fh *os.File, ip6 bool) {
     started := time.Now()
     fmt.Fprintf(os.Stderr, "Starting output at: %s\n", started.String())
 
@@ -48,10 +63,12 @@ func Parse(fh *os.File) {
     str := ""
     spaces, _ := regexp.Compile(" +")
 
-    // Add inet6num if you need IPv6 too.
     hasInetnum, _ := regexp.Compile("^inetnum:")
-    isInet := false
+    if ip6 {
+        hasInetnum, _ = regexp.Compile("^inet6?num:")
+    }
 
+    isInet := false
 
     for scanner.Scan() {
         text := scanner.Text()
@@ -70,8 +87,7 @@ func Parse(fh *os.File) {
             parts := strings.Split(simple, ":")
 
             if isInet {
-                fromTo := strings.Split(parts[1], "-")
-                str += fromTo[0] + ";" + fromTo[1] + ";"
+                str += addrFormat(parts)
             } else {
                 str += parts[1]
             }
@@ -93,6 +109,8 @@ func Parse(fh *os.File) {
 
 func main() {
     fName := flag.String("in", "ripe.db", "Input file to parse, defauls to ripe.db")
+    ip6 := flag.Bool("ip6", false, "Include IPv6 ranges as well, defaults to false")
+
     flag.Parse()
 
     if len(*fName) <= 0 {
@@ -105,5 +123,5 @@ func main() {
         log.Fatalln(err)
     }
     defer f.Close()
-    Parse(f)
+    Parse(f, *ip6)
 }
