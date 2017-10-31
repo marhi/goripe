@@ -27,9 +27,10 @@ func addrFormat(parts []string) string {
     return addr
 }
 
-// Parse(fh *os.File)
+// Parse(fh *os.File, ip6 bool)
 // Parses the input ripe database for IPv4 ranges and corresponding countries.
-// Status messages are written to stderr, and data to stdout
+// Also includes IPv6 ranges if ip6 param is set to true.
+// Status messages are written to stderr, and data to stdout.
 func Parse(fh *os.File, ip6 bool) {
     started := time.Now()
     fmt.Fprintf(os.Stderr, "Starting output at: %s\n", started.String())
@@ -77,7 +78,6 @@ func Parse(fh *os.File, ip6 bool) {
                 str = ""
             }
         }
-
     }
 
     fmt.Fprintf(os.Stderr, "Ending output at: %s, took: %s\n", time.Now().String(), time.Now().Sub(started).String())
